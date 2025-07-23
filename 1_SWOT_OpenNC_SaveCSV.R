@@ -108,6 +108,7 @@ for (j in file_list){
     SWOT_Points$height_uncert = SWOT_Points$phase_noise*SWOT_Points$dheight
     SWOT_Points$geo_corr = SWOT_Points$geoid-SWOT_Points$solid_tide-SWOT_Points$load_tide-SWOT_Points$pole_tide
     SWOT_Points$wse = SWOT_Points$height-SWOT_Points$geo_corr
+    # TIDE CORRECTIONS
     SWOT_Points$height_w_tides = SWOT_Points$height-SWOT_Points$solid_tide-SWOT_Points$load_tide-SWOT_Points$pole_tide
     } # End PIXCloud processing
   

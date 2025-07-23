@@ -12,19 +12,17 @@ library(ncdf4)
 # Read AOI shapefile
 # ---------------------------------------------------------------------------------------------------------------------------
 filename <- '/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWORD_clipped_TN_domain/TN_AOI.shp'
-#"/Users/camryn/Documents/UNC/_Tier1_sites/expanded_Yukon_Flats/GIS/YR_AOI.shp"
 AOI <- st_read(filename)
 AOI_coords <- st_coordinates(AOI)[, 1:2]  # Extract x, y coordinates
 AOI_sf <- st_polygon(list(AOI_coords)) %>%  # Convert to polygon
-  st_sfc(crs = st_crs(32606)) %>% # crs=WGS84 4326, ITRF14 7912, UTM6N
+  st_sfc(crs = st_crs(4326)) %>% # crs=WGS84 4326, ITRF14 7912
   st_as_sf() # Convert to sf
-AOI_sf = st_transform(AOI_sf, crs=32606) # confirm crs=WGS84
+AOI_sf = st_transform(AOI_sf, crs=4326) # confirm crs=WGS84
 
 # Load PIXC csv
 # ---------------------------------------------------------------------------------------------------------------------------
 # Define the folder path
 folder_path = '/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWOT/pixc/UTM6N_tidecorrections'
-#'/Users/camryn/Documents/UNC/_Tier1_sites/expanded_Yukon_Flats/SWOT/pixc/lower_YR' # v2.0
 all_files = list.files(folder_path, pattern="*.csv", full.names=TRUE) 
 
 # Extract unique identifiers from filenames: start datetime of overpass
@@ -52,7 +50,7 @@ for (id in unique_ids) {
     # Convert the concatenated dataframe to sf object
     concatenated_sf = st_as_sf(concatenated_df,
                                coords = c("longitude", "latitude"),
-                               crs = 32606, # WGS84 4326, ITRF14 7912, UTM6N 32606
+                               crs = 4326, # WGS84 4326, ITRF14 7912, UTM6N 32606
                                remove = FALSE)
     
     # Use st_intersects to get indices of points within the AOI
