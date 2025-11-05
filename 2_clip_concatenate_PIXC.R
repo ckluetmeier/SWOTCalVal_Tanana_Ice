@@ -22,7 +22,7 @@ AOI_sf = st_transform(AOI_sf, crs=4326) # confirm crs=WGS84
 # Load PIXC csv
 # ---------------------------------------------------------------------------------------------------------------------------
 # Define the folder path
-folder_path = '/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWOT/pixc/UTM6N_tidecorrections'
+folder_path = '/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWOT/pixc/EPSG4326'
 all_files = list.files(folder_path, pattern="*.csv", full.names=TRUE) 
 
 # Extract unique identifiers from filenames: start datetime of overpass
@@ -88,7 +88,7 @@ for (id in names(PIXCL_list)) {
 # Save output as CSV or shapefiles
 # ---------------------------------------------------------------------------------------------------------------------------
 # Directory to save the CSV files (modify as needed)
-output_dir <- "/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWOT/pixc/UTM6N_tidecorrections"
+output_dir <- "/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWOT/pixc/EPSG4326"
 
 # Loop over PIXCL_list and save each sf object as a CSV
 for (name in names(PIXCL_list)) {

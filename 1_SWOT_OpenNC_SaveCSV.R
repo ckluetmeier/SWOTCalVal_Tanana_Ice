@@ -135,12 +135,12 @@ for (j in file_list){
   # Quality filtering
   # Optional filters to add!
   SWOT_Points <- SWOT_Points %>%
-  #   # phase unwrapping error flags
-  #   filter(!geolocqual %in% c(
-  #     4, 4101, 5, 6, 4100, 4102, 524292, 524293,
-  #     524294, 524295, 528389, 528390, 7, 528388,
-  #     16777220, 17301508, 17305604, 528391, 4103
-  #   )) %>%
+    # phase unwrapping error flags
+    filter(!geolocqual %in% c(
+      4, 4101, 5, 6, 4100, 4102, 524292, 524293,
+      524294, 524295, 528389, 528390, 7, 528388,
+      16777220, 17301508, 17305604, 528391, 4103
+    )) %>%
   #   # water near land, water, dark water
   #   filter(class %in% c(
   #     3, 4, 5
