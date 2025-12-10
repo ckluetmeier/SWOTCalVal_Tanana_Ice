@@ -8,7 +8,7 @@ library(dplyr)
 
 # ---------------------------------------------------------------------------------------------------------------------------
 # read in SWOT data
-SWOT_df <- read_csv('/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWOT/pixc/ITRF14/summaryStats_pixc_node_polygon_ITRF14.csv')
+SWOT_df <- read_csv('/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWOT/pixc/ITRF14_WSG84_with_tides_with4326inR/summaryStats_pixc_node_polygon_watermask.csv')
 SWOT_df$SWOTFileDate <- as.character(SWOT_df$SWOTFileDate)
 
 # filter to single date for comparisons
@@ -26,7 +26,7 @@ SWOT_df_filtered <- SWOT_df_filtered %>%
 
 # ---------------------------------------------------------------------------------------------------------------------------
 # read in FODAR data
-FODAR_df <- read_csv('/Users/camryn/Documents/UNC/Ice_caval/Tanana/FODAR/summaryStats_fodar_node_polygon_ITRF14.csv')
+FODAR_df <- read_csv('/Users/camryn/Documents/UNC/Ice_caval/Tanana/FODAR/summaryStats_fodar_node_polygon_watermask.csv')
 
 # filter to single date for comparisons
 # manually adjust date
@@ -218,6 +218,10 @@ ggplot(SWOT_FODAR_df, aes(x = abs(SWOT_elev_mean_m - FODAR_elev_mean_nobias_m)))
   annotate("text", x = 2, y = 0.53, label = paste("|50% diff|:", round(percentile_50_error_nobias, 4)), color = "#222222", size = 6) +
   theme_minimal(base_size = 20) 
 
+
+
+
+
 # ---------------------------------------------------------------------------------------------------------------------------
 # Summary stats using tenth percentile value
 
@@ -371,20 +375,21 @@ ggplot(plot_df) +
 
 # dist to outlet
 ggplot(SWOT_FODAR_df) +
-  geom_point(aes(x = dist_out_fix / 1000, y = residuals_nobias), size = 4, color = "#00429D") +
+  geom_point(aes(x = dist_out_fix / 1000, y = residuals_nobias), size = 4, color = "#00429D") + # 
   xlab("Distance to outlet (km)") +
   ylab("residuals (m)") +
   theme_minimal(base_size = 30) 
 
 # CDF plot
 ggplot(SWOT_FODAR_df, aes(x = abs(SWOT_elev_10percentile_m - FODAR_elev_10percentile_nobias_m))) +
-  stat_ecdf(geom = "step", color = "darkblue", size = 1) +
+  stat_ecdf(geom = "step", color = "darkblue", size = 1.6) +
   geom_hline(yintercept = 0.68, linetype = "dashed", color = "grey") +
   geom_hline(yintercept = 0.50, linetype = "dashed", color = "grey") +
-  labs(x = "SWOT Height - FODAR Height (m)", y = "Cumulative Probability", title = "CDF of SWOT - FODAR Height") +
-  annotate("text", x = 1.5, y = 0.71, label = paste("|68% diff|:", round(percentile_68_error_nobias, 4)), color = "#222222", size = 6) +
-  annotate("text", x = 1.5, y = 0.53, label = paste("|50% diff|:", round(percentile_50_error_nobias, 4)), color = "#222222", size = 6) +
-  theme_minimal(base_size = 20) 
+  labs(x = "| SWOT Height - FODAR Height | (m)", y = "Cumulative Probability", title = "Relative 10%ile Height Differences") +
+  annotate("text", x = 2, y = 0.71, label = paste("| 68%ile |:", round(percentile_68_error_nobias, 4), "m"), color = "#222222", size = 7) +
+  annotate("text", x = 2, y = 0.53, label = paste("| 50%ile |:", round(percentile_50_error_nobias, 3), "m"), color = "#222222", size = 7) +
+  theme_minimal(base_size = 22) +
+  coord_cartesian(xlim = c(0, 2.5))
 
 
 
