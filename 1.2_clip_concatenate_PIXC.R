@@ -11,18 +11,18 @@ library(ncdf4)
 
 # Read AOI shapefile
 # ---------------------------------------------------------------------------------------------------------------------------
-filename <- '/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWORD_clipped_TN_domain/TN_AOI.shp'
+filename <- '/Users/camryn/Documents/UNC/Ice_caval/Tanana/TN_AOI/TN_AOI.shp'
 AOI <- st_read(filename)
 AOI_coords <- st_coordinates(AOI)[, 1:2]  # Extract x, y coordinates
 AOI_sf <- st_polygon(list(AOI_coords)) %>%  # Convert to polygon
-  st_sfc(crs = st_crs(7912)) %>% # crs=WGS84 4326, ITRF14 7912
+  st_sfc(crs = st_crs(4326)) %>% # crs=WGS84 4326, ITRF14 7912
   st_as_sf() # Convert to sf
-AOI_sf = st_transform(AOI_sf, crs=7912) # confirm crs=WGS84
+AOI_sf = st_transform(AOI_sf, crs=4326) # confirm crs=WGS84
 
 # Load PIXC csv
 # ---------------------------------------------------------------------------------------------------------------------------
 # Define the folder path
-folder_path = '/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWOT/pixc/ITRF14_WSG84_with_tides'
+folder_path = '/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWOT/pixc/PGD0'
 all_files = list.files(folder_path, pattern="*.csv", full.names=TRUE) 
 
 # Extract unique identifiers from filenames: start datetime of overpass
@@ -50,7 +50,7 @@ for (id in unique_ids) {
     # Convert the concatenated dataframe to sf object
     concatenated_sf = st_as_sf(concatenated_df,
                                coords = c("longitude", "latitude"),
-                               crs = 7912, # WGS84 4326, ITRF14 7912, UTM6N 32606
+                               crs = 4326, # WGS84 4326, ITRF14 7912, UTM6N 32606
                                remove = FALSE)
     
     # Use st_intersects to get indices of points within the AOI
@@ -88,7 +88,7 @@ for (id in names(PIXCL_list)) {
 # Save output as CSV or shapefiles
 # ---------------------------------------------------------------------------------------------------------------------------
 # Directory to save the CSV files (modify as needed)
-output_dir <- "/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWOT/pixc/ITRF14_WSG84_with_tides"
+output_dir <- "/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWOT/pixc/PGD0"
 
 # Loop over PIXCL_list and save each sf object as a CSV
 for (name in names(PIXCL_list)) {

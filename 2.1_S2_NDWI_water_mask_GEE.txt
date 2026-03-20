@@ -1,0 +1,140 @@
+///////////////// ------------ User input ------------ /////////////////
+
+
+// Define date range
+
+// End of season low flow - Tanana
+// https://waterdata.usgs.gov/monitoring-location/USGS-15515500/#dataTypeId=continuous-00065-0&showFieldMeasurements=true&startDT=2024-01-01&endDT=2025-02-01
+var start = ee.Date('2024-10-01');
+var end = ee.Date('2024-10-30');
+
+// filename
+var filename = 'S2_WaterMask_NDWI';
+var filename_rgb = 'S2_WaterMask_RGB';
+
+
+
+// Select geometry - DRAW IN RECTANGLE FOR AREA OF INTEREST ON THE MAP or LOAD SHAPEFILE
+var selGeom = geometry;
+Map.centerObject(selGeom,11);
+
+var nwdi_thresh = 0.2; // 0.1 for HF, 0.2 for LF
+
+
+///////////////// ------------ Functions ------------ /////////////////
+
+// S2 cloud masking
+function maskS2clouds(image) {0.4;
+  var qa = image.select('QA60');
+
+  // Bits 10 and 11 are clouds and cirrus, respectively.
+  var cloudBitMask = 1 << 10;
+  var cirrusBitMask = 1 << 11;
+
+  // Both flags should be set to zero, indicating clear conditions.
+  var mask = qa.bitwiseAnd(cloudBitMask).eq(0)
+      .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+
+  var masked_image = image.updateMask(mask).divide(10000);
+  return masked_image.set({'system:time_start':image.get('system:time_start')})
+}
+
+function setCloudiness(image) {
+  // sets cloudiness of L8 TOA image within the river buffer region
+  var cloud = ee.Algorithms.Landsat.simpleCloudScore(image).select('cloud');
+  var cloudiness = cloud.reduceRegion({
+    reducer: 'mean', 
+    geometry: selGeom, 
+    scale: 30,
+  });
+  return image.set(cloudiness);
+}
+
+// NDWI algorithms
+
+var calculateNDWI_s2 = function(image) {
+  var ndwi = image.normalizedDifference(['B3', 'B8']).rename('NDWI');
+  return image.addBands(ndwi);
+};
+
+
+///////////////// ------------ Load data ------------ /////////////////
+
+var s2b4 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+                      .filterDate(start,end)
+                      .filterBounds(selGeom)
+                      .map(calculateNDWI_s2);
+print('s2b4')
+print(s2b4)
+
+
+var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+                      .filterDate(start,end)
+                      .filterBounds(selGeom)
+                      .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE',30))
+                      .map(maskS2clouds) // cloud mask too strict
+                      .map(calculateNDWI_s2);
+
+print('s2 after')                      
+print(s2)
+
+
+///////////////// ------------ Median composite ------------ /////////////////
+
+s2 = s2.reduce(ee.Reducer.median(), 8);
+
+
+
+///////////////// ------------ Plotting ------------ /////////////////
+
+var rwb = ['red','white','blue']
+var bandName = 'NDWI_median'
+var B4 = 'B4_median'
+var B3 = 'B3_median'
+var B2 = 'B2_median'
+
+
+// Create masks
+var s2mask = s2.select(bandName).gte(nwdi_thresh).rename('water_mask');
+
+var visualization = {
+  min: 0.0,
+  max: 0.3,
+  bands: [B4, B3, B2],
+};
+
+
+Map.addLayer(s2.select(bandName).clip(selGeom), {palette: rwb}, 'S2 - NDWI');
+Map.addLayer(s2.clip(selGeom), visualization, 'S2 median-RGB');
+Map.addLayer(s2mask.select('water_mask').clip(selGeom), {min: 0, max: 1, palette: ['white', 'blue']}, 'S2 mask');
+Map.centerObject(geometry,10)
+
+
+///////////////// ------------ Export ------------ /////////////////
+
+
+// Export the water mask to Google Drive
+Export.image.toDrive({
+  image: s2mask.clip(selGeom).select('water_mask'),
+  description: filename,
+  folder: 'COOL_lab',
+  crs: 'EPSG:4326', 
+  fileFormat: 'GeoTIFF',
+  scale: 10,                     
+  maxPixels: 1e8
+});
+
+
+var imageNDWI = s2.visualize({bands: [bandName], palette: rwb});
+var imageRGB = s2.visualize({min: 0.0, max: 0.2, bands: [B4, B3, B2]});
+
+// Export RGB or NDWI to Google Drive
+Export.image.toDrive({
+  image: imageNDWI.clip(selGeom),
+  description: filename_rgb,
+  folder: 'COOL_lab',
+  crs: 'EPSG:4326', 
+  fileFormat: 'GeoTIFF',
+  scale: 10,                     
+  maxPixels: 1e9
+});

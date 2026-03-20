@@ -10,7 +10,13 @@ library(ncdf4)
 # -------------------------------------------------------------------------------------------
 
 # Set working directory
-wd = ("/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWOT/pixc")
+
+# PIXC
+wd = ("/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWOT/pixc/PGD0/")
+
+# PIXCVec
+wd = ("/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWOT/pixcvec/PGD0/")
+
 setwd(wd)
 
 # -------------------------------------------------------------------------------------------
@@ -133,14 +139,8 @@ for (j in file_list){
   SWOT_Points = na.omit(SWOT_Points)
   
   # Quality filtering
-  # Optional filters to add!
+  # Optional filters to add for the PIXC
   SWOT_Points <- SWOT_Points %>%
-    # phase unwrapping error flags
-    filter(!geolocqual %in% c(
-      4, 4101, 5, 6, 4100, 4102, 524292, 524293,
-      524294, 524295, 528389, 528390, 7, 528388,
-      16777220, 17301508, 17305604, 528391, 4103
-    )) %>%
   #   # water near land, water, dark water
   #   filter(class %in% c(
   #     3, 4, 5

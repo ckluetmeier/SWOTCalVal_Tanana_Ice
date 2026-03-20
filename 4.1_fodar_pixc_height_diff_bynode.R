@@ -386,10 +386,10 @@ ggplot(SWOT_FODAR_df, aes(x = abs(SWOT_elev_10percentile_m - FODAR_elev_10percen
   geom_hline(yintercept = 0.68, linetype = "dashed", color = "grey") +
   geom_hline(yintercept = 0.50, linetype = "dashed", color = "grey") +
   labs(x = "| SWOT Height - FODAR Height | (m)", y = "Cumulative Probability", title = "Relative 10%ile Height Differences") +
-  annotate("text", x = 2, y = 0.71, label = paste("| 68%ile |:", round(percentile_68_error_nobias, 4), "m"), color = "#222222", size = 7) +
-  annotate("text", x = 2, y = 0.53, label = paste("| 50%ile |:", round(percentile_50_error_nobias, 3), "m"), color = "#222222", size = 7) +
+  annotate("text", x = 0.75, y = 0.71, label = paste("| 68%ile |:", round(percentile_68_error_nobias, 4), "m"), color = "#222222", size = 7) +
+  annotate("text", x = 0.75, y = 0.53, label = paste("| 50%ile |:", round(percentile_50_error_nobias, 3), "m"), color = "#222222", size = 7) +
   theme_minimal(base_size = 22) +
-  coord_cartesian(xlim = c(0, 2.5))
+  coord_cartesian(xlim = c(0, 1))
 
 
 
