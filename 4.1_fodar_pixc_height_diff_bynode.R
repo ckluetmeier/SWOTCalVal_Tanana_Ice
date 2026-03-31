@@ -8,7 +8,7 @@ library(dplyr)
 
 # ---------------------------------------------------------------------------------------------------------------------------
 # read in SWOT data
-SWOT_df <- read_csv('/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWOT/pixc/ITRF14_WSG84_with_tides_with4326inR/summaryStats_pixc_node_polygon_watermask.csv')
+SWOT_df <- read_csv('/Users/camryn/Documents/UNC/Ice_caval/Tanana/SWOT/pixc/PGD0/PIXC_node_polygon_watermask.csv')
 SWOT_df$SWOTFileDate <- as.character(SWOT_df$SWOTFileDate)
 
 # filter to single date for comparisons
@@ -26,7 +26,7 @@ SWOT_df_filtered <- SWOT_df_filtered %>%
 
 # ---------------------------------------------------------------------------------------------------------------------------
 # read in FODAR data
-FODAR_df <- read_csv('/Users/camryn/Documents/UNC/Ice_caval/Tanana/FODAR/summaryStats_fodar_node_polygon_watermask.csv')
+FODAR_df <- read_csv('/Users/camryn/Documents/UNC/Ice_caval/Tanana/FODAR/SWOT_CRS/fodar_node_polygon_watermask.csv')
 
 # filter to single date for comparisons
 # manually adjust date
