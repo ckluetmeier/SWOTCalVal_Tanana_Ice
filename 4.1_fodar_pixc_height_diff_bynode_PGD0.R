@@ -164,6 +164,13 @@ write.csv(
   row.names = FALSE)
 
 
+
+
+
+
+
+
+
 # ---------------------------------------------------------------------------------------------------------------------------
 # PLOTS
 
@@ -206,12 +213,15 @@ ggplot(plot_df) +
   theme_minimal(base_size = 30) +
   labs(color = "Data type")
 
-# dist to outlet
+# ******* Fig 1 ***********
+# dist to outlet colored by elevation
 ggplot(SWOT_FODAR_df) +
-  geom_point(aes(x = dist_out / 1000, y = residuals_nobias), size = 4, color = "#00429D") + # 
+  geom_point(aes(x = dist_out / 1000, y = SWOT_elev_10percentile_m, color = SWOT_elev_10percentile_m), size = 3) +
+  scale_color_distiller(palette = "GnBu", direction = 1, name = "Height (m)") +
   xlab("Distance to outlet (km)") +
-  ylab("residuals (m)") +
-  theme_minimal(base_size = 30) 
+  ylab("SWOT river ice height (m)") +
+  theme_minimal(base_size = 30) +
+  theme(legend.position = "none")
 
 # CDF plot
 ggplot(SWOT_FODAR_df, aes(x = abs(SWOT_elev_10percentile_m - FODAR_elev_10percentile_nobias_m))) +
@@ -247,98 +257,119 @@ data_list <- lapply(seq_along(csv_files), function(i) {
 combined_SWOT_FODAR_df <- bind_rows(data_list)
 
 # correlation test
-cor_test_nobias <- cor.test(combined_SWOT_FODAR_df$SWOT_elev_mean_m, combined_SWOT_FODAR_df$FODAR_elev_mean_nobias_m)
+cor_test_nobias <- cor.test(combined_SWOT_FODAR_df$SWOT_elev_10percentile_m, combined_SWOT_FODAR_df$FODAR_elev_10percentile_nobias_m)
 
 # Extract r and p-value
 r_value_nobias <- cor_test_nobias$estimate # Pearson correlation coefficient
 p_value_nobias <- cor_test_nobias$p.value # 
 
-# plot SWOT vs FODAR elevation
-ggplot(combined_SWOT_FODAR_df, aes(x = FODAR_elev_mean_nobias_m, y = SWOT_elev_mean_m)) +
-  geom_point(size = 4, color = "darkblue") +
-  xlab("FODAR elevation (m)") +
-  ylab("SWOT elevation (m)") +
-  theme_minimal(base_size = 30) +
-  geom_abline(linetype = "dashed", color = "gray") +  # 1:1 line
+# plot SWOT vs FODAR height
+ggplot(combined_SWOT_FODAR_df, aes(x = FODAR_elev_10percentile_nobias_m, y = SWOT_elev_10percentile_m)) +
+  geom_point(size = 4, aes(color = factor(FODAR_FODARFileDate))) +
+  scale_color_manual(
+    values = c("20250323" = "#7571AE", "20250403" = "#4C9C7B"),
+    labels = c("20250323" = "2025-03-24", "20250403" = "2025-04-03"),
+    name = "FODAR Date"
+  ) +
+  xlab("DEM height (m)") +
+  ylab("SWOT height (m)") +
+  ggtitle("(b) SWOT vs. DEM Heights") +
+  theme_minimal(base_size = 25) +
+  geom_abline(linetype = "dashed", color = "gray") +
   annotate("text", x = min(combined_SWOT_FODAR_df$FODAR_elev_mean_nobias_m, na.rm = TRUE), 
            y = max(combined_SWOT_FODAR_df$SWOT_elev_mean_m, na.rm = TRUE), 
-           label = paste0("r = ", round(r_value_nobias, 4), "\np value = ", signif(p_value_nobias, 3),
+           label = paste0("r = ", round(r_value_nobias, 4), "\np value = ", round(p_value_nobias, 4),
                           "\nn = ", nrow(combined_SWOT_FODAR_df)),
            hjust = 0, vjust = 1, size = 8)
 
-# Calculate the 68th & 50th percentile error
-percentile_68_error_nobias <- quantile(abs(combined_SWOT_FODAR_df$residuals_10pct_nobias_m), 0.68, na.rm=TRUE)
-percentile_50_error_nobias <- quantile(abs(combined_SWOT_FODAR_df$residuals_10pct_nobias_m), 0.50, na.rm=TRUE)
 
-# CDF plot
-ggplot(combined_SWOT_FODAR_df, aes(x = abs(residuals_10pct_nobias_m))) +
-  stat_ecdf(geom = "step", color = "darkblue", size = 1) +
-  geom_hline(yintercept = 0.68, linetype = "dashed", color = "grey") +
-  geom_hline(yintercept = 0.50, linetype = "dashed", color = "grey") +
-  labs(x = "SWOT Elev - FODAR Elev (m)", y = "Cumulative Probability", title = "CDF of SWOT - FODAR Elevation") +
-  annotate("text", x = 4, y = 0.71, label = paste("|68% diff|:", round(percentile_68_error_nobias, 4)), color = "#222222", size = 6) +
-  annotate("text", x = 4, y = 0.53, label = paste("|50% diff|:", round(percentile_50_error_nobias, 4)), color = "#222222", size = 6) +
-  theme_minimal(base_size = 20) +
-  coord_cartesian(xlim = c(0, 5))
+
+# CDF plot by day
+# Pre-compute stats for each group
+n_combined <- nrow(combined_SWOT_FODAR_df)
+q68_combined <- round(quantile(abs(combined_SWOT_FODAR_df$residuals_10pct_nobias_m), 0.68, na.rm = TRUE), 3)
+q50_combined <- round(quantile(abs(combined_SWOT_FODAR_df$residuals_10pct_nobias_m), 0.50, na.rm = TRUE), 3)
+
+df_323 <- combined_SWOT_FODAR_df %>% filter(FODAR_FODARFileDate == 20250323)
+n_323 <- nrow(df_323)
+q68_323 <- round(quantile(abs(df_323$residuals_10pct_nobias_m), 0.68, na.rm = TRUE), 3)
+q50_323 <- round(quantile(abs(df_323$residuals_10pct_nobias_m), 0.50, na.rm = TRUE), 3)
+
+df_403 <- combined_SWOT_FODAR_df %>% filter(FODAR_FODARFileDate == 20250403)
+n_403 <- nrow(df_403)
+q68_403 <- round(quantile(abs(df_403$residuals_10pct_nobias_m), 0.68, na.rm = TRUE), 3)
+q50_403 <- round(quantile(abs(df_403$residuals_10pct_nobias_m), 0.50, na.rm = TRUE), 3)
 
 
 plot_df <- combined_SWOT_FODAR_df %>%
-  mutate(
-    group = case_when(
-      FODAR_FODARFileDate == 20250323 ~ "2025-03-23",
-      FODAR_FODARFileDate == 20250403 ~ "2025-04-03",
-      TRUE ~ NA_character_
-    )
-  )
+  mutate(group = case_when(
+    FODAR_FODARFileDate == 20250323 ~ "2025-03-24",
+    FODAR_FODARFileDate == 20250403 ~ "2025-04-03",
+    TRUE ~ NA_character_))
 
 ggplot() +
-  # --- Combined (ALL data) ---
-  stat_ecdf(
-    data = combined_SWOT_FODAR_df,
-    aes(x = abs(residuals_10pct_nobias_m)),
-    color = "darkblue",
-    size = 1.2
-  ) +
-  
+
   # --- Individual dates ---
   stat_ecdf(
     data = plot_df %>% filter(!is.na(group)),
     aes(x = abs(residuals_10pct_nobias_m), color = group),
+    linetype = "longdash",
     size = 1
+  ) +
+  
+  # --- Combined (ALL data) ---
+  stat_ecdf(
+    data = combined_SWOT_FODAR_df,
+    aes(x = abs(residuals_10pct_nobias_m)),
+    color = "black",
+    size = 1.4
   ) +
   
   scale_color_manual(
     values = c(
-      "2025-03-23" = "#E66100",
-      "2025-04-03" = "#5D3A9B"
-    ),
-    name = "FODAR Date"
+      "2025-03-23" = "#7571AE",
+      "2025-04-03" = "#4C9C7B"
+    )
   ) +
   
   geom_hline(yintercept = 0.68, linetype = "dashed", color = "grey") +
   geom_hline(yintercept = 0.50, linetype = "dashed", color = "grey") +
   
   labs(
-    x = "SWOT Elev - FODAR Elev (m)",
-    y = "Cumulative Probability",
-    title = "CDF of SWOT - FODAR Elevation"
+    x = "| SWOT - DEM height | (m)",
+    y = "Cumulative Percentage (%)",
+    title = "(a) CDF of Relative Height Error"
   ) +
   
-  # --- annotations tied to COMBINED curve ---
-  annotate(
-    "text",
-    x = 4, y = 0.71,
-    label = paste("|68% diff|:", round(percentile_68_error_nobias, 4)),
-    color = "darkblue", size = 6
-  ) +
-  annotate(
-    "text",
-    x = 4, y = 0.53,
-    label = paste("|50% diff|:", round(percentile_50_error_nobias, 4)),
-    color = "darkblue", size = 6
-  ) +
+  # --- Annotations: horizontal reference line labels ---
+  # annotate("text", x = 2, y = 0.71,
+  #          label = paste("|68% diff|:", round(q68_combined, 3)), size = 6) +
+  # annotate("text", x = 2, y = 0.53,
+  #          label = paste("|50% diff|:", round(q50_combined, 3)), size = 6) +
   
-  theme_minimal(base_size = 20) +
+  # --- Legend annotations: Combined ---
+  annotate("text", x = Inf, y = 0.14, hjust = 1, vjust = 0,
+           label = paste0("Combined: n = ", n_combined,
+                          ",  |68%ile| = ", q68_combined,
+                          " m,  |50%ile| = ", q50_combined, " m"),
+           color = "black", size = 5.5) +
+  
+  # --- Legend annotations: 2025-03-23 ---
+  annotate("text", x = Inf, y = 0.08, hjust = 1, vjust = 0,
+           label = paste0("2025-03-24: n = ", n_323,
+                          ",  |68%ile| = ", q68_323,
+                          " m,  |50%ile| = ", q50_323, " m"),
+           color = "#7571AE", size = 5.4) +
+  
+  # --- Legend annotations: 2025-04-03 ---
+  annotate("text", x = Inf, y = 0.02, hjust = 1, vjust = 0,
+           label = paste0("2025-04-03: n = ", n_403,
+                          ",  |68%ile| = ", q68_403,
+                          " m,  |50%ile| = ", q50_403, " m"),
+           color = "#4C9C7B", size = 5.4) +
+  
+  theme_minimal(base_size = 25) +
+  theme(legend.position = "none") +
   coord_cartesian(xlim = c(0, 5))
 
 
@@ -352,12 +383,12 @@ ggplot(combined_SWOT_FODAR_df,
     # color = "black"   # optional: outlines for clarity
   ) +
   scale_fill_manual(values = c(
-      "20250323" = "#E66100",
-      "20250403" = "#5D3A9B"),
+      "20250323" = "#E69F00",
+      "20250403" = "#56B4E9"),
     name = "FODAR Date",
     labels = c("2025-03-23", "2025-04-03")) +
   labs(
     x = "Residuals (FODAR - SWOT, m)",
     y = "Count",
-    title = "Stacked Histogram of Residuals (10th Percentile, No Bias)") +
+    title = "Histogram of Height Error (10th Percentile, No Bias)") +
   theme_minimal(base_size = 20)
